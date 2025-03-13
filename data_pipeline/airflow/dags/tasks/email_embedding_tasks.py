@@ -13,10 +13,16 @@ from google.cloud import storage
 
 # Initialize logging
 logger = logging.getLogger(__name__)
-load_dotenv()
 LOCAL_TMP_DIR = "/tmp/email_embeddings"
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Move this to the top of the file, before any OpenAI operations
+load_dotenv()
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise ValueError("OPENAI_API_KEY environment variable is not set")
+
+# Initialize the OpenAI client with the API key
+client = openai.Client(api_key=api_key)
 
 
 def get_chroma_client():
@@ -112,7 +118,7 @@ def generate_embeddings(**context):
             axis=1,
         )
         df["embeddings"] = df.apply(
-            lambda row: openai.embeddings.create(
+            lambda row: client.embeddings.create(
                 input=row.redacted_text, model="text-embedding-3-small"
             )
             .data[0]
