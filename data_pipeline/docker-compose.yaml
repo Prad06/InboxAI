@@ -97,6 +97,9 @@ x-airflow-common: &airflow-common
     THREAD_FOLDER: ${THREAD_FOLDER}
     CREDENTIAL_PATH_FOR_GMAIL_API: ${CREDENTIAL_PATH_FOR_GMAIL_API}
     GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS}
+
+    # OpenAI configuration
+    OPENAI_API_KEY: ${OPENAI_API_KEY}
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
