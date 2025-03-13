@@ -100,6 +100,9 @@ x-airflow-common: &airflow-common
 
     # OpenAI configuration
     OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+    # Chroma configuration
+    CHROMA_HOST_URL: ${CHROMA_HOST_URL}
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
