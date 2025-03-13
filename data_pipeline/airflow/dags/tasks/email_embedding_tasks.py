@@ -100,6 +100,8 @@ def generate_embeddings(**context):
         )
         df = pd.read_parquet(local_file_path)
         df["labels"] = df["labels"].astype(str)
+        logging.info("OpenAI API Key loaded successfully.")
+        logging.info(openai.api_key)
         # using apply function to create a new column
         df["metadata"] = df.apply(
             lambda row: {
