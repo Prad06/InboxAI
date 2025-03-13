@@ -1,6 +1,6 @@
 import logging
 import os
-import traceback
+import re
 from typing import Optional
 
 import chromadb
@@ -23,6 +23,23 @@ if not api_key:
 
 # Initialize the OpenAI client with the API key
 client = openai.Client(api_key=api_key)
+
+
+def sanitize_collection_name(email: str) -> str:
+    # Replace @ and . with underscore
+    sanitized = email.replace("@", "_").replace(".", "_")
+    # Remove any consecutive underscores
+    while "__" in sanitized:
+        sanitized = sanitized.replace("__", "_")
+    # Ensure it starts and ends with alphanumeric
+    sanitized = sanitized.strip("_")
+    # Add prefix if too short
+    if len(sanitized) < 3:
+        sanitized = f"user_{sanitized}"
+    # Truncate if too long
+    if len(sanitized) > 63:
+        sanitized = sanitized[:63].rstrip("_")
+    return sanitized
 
 
 def get_chroma_client():
@@ -48,7 +65,11 @@ def upload_to_chroma(user_id, embedded_data_path, client) -> None:
     try:
         # Load the data
         df = pd.read_parquet(embedded_data_path)
-        collection = client.get_or_create_collection(name=user_id)
+
+        # Sanitize the user ID
+        collection_name = sanitize_collection_name(user_id)
+        logger.info(f"Using collection name: {collection_name} for user: {user_id}")
+        collection = client.get_or_create_collection(name=collection_name)
 
         # Upload data to Chroma
         collection.upsert(
@@ -97,6 +118,11 @@ def download_processed_from_gcs(**context):
         raise
 
 
+def extract_email(email):
+    match = re.search(r"[\w\.-]+@[\w\.-]+", email)
+    return match.group(0) if match else None
+
+
 def generate_embeddings(**context):
     try:
         local_file_path = context["ti"].xcom_pull(key="local_file_path")
@@ -106,19 +132,18 @@ def generate_embeddings(**context):
         )
         df = pd.read_parquet(local_file_path)
         df["labels"] = df["labels"].astype(str)
-        logging.info("OpenAI API Key loaded successfully.")
-        logging.info(openai.api_key)
         # using apply function to create a new column
         df["metadata"] = df.apply(
             lambda row: {
-                "from": row.from_email,
+                "from": extract_email(row.from_email),
                 "date": row.date,
                 "labels": row.labels,
+                "to": extract_email(row.to[0]),
             },
             axis=1,
         )
         df["embeddings"] = df.apply(
-            lambda row: client.embeddings.create(
+            lambda row: openai.embeddings.create(
                 input=row.redacted_text, model="text-embedding-3-small"
             )
             .data[0]
