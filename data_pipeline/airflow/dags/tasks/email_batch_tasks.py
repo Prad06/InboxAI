@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 import traceback
 from datetime import datetime, timedelta, timezone
 
@@ -270,6 +271,8 @@ def trigger_email_get_for_batches(dag, **context):
             trigger.execute(context=context)
             triggered_count += 1
             logger.info(f"Successfully triggered DAG run with ID: {run_id}")
+            # Add a small delay to avoid rate limiting
+            time.sleep(30)
         except Exception as e:
             logger.error(f"Failed to trigger DAG for batch {batch_num}: {str(e)}")
             logger.error(traceback.format_exc())
