@@ -73,7 +73,7 @@ def upload_to_chroma(user_id, embedded_data_path, client) -> None:
 
         # Upload data to Chroma
         collection.upsert(
-            documents=df.subject.tolist(),
+            documents=df.redacted_text.tolist(),
             embeddings=df.embeddings.tolist(),
             metadatas=df.metadata.tolist(),
             ids=df.message_id.tolist(),
